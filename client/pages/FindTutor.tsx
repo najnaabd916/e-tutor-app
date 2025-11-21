@@ -1,4 +1,5 @@
 import { useState, useMemo } from "react";
+import { useNavigate } from "react-router-dom";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import {
@@ -155,6 +156,7 @@ const mockTutors: Tutor[] = [
 ];
 
 export default function FindTutor() {
+  const navigate = useNavigate();
   const [selectedServices, setSelectedServices] = useState<string[]>([]);
   const [filters, setFilters] = useState({
     searchQuery: "",
@@ -274,7 +276,7 @@ export default function FindTutor() {
 
       <main className="flex-grow">
         {/* Service Selection Section */}
-        <section className="py-6 lg:py-8 border-b border-border dark:border-slate-800">
+        <section className="pt-6 pb-2 lg:pt-8 lg:pb-2 border-b border-border dark:border-slate-800">
           <div className="container mx-auto px-4 sm:px-6 lg:px-8">
             <div className="mb-6">
               <h1 className="text-3xl lg:text-4xl font-bold text-foreground mb-2">
@@ -294,13 +296,13 @@ export default function FindTutor() {
                   <button
                     key={service.id}
                     onClick={() => handleServiceToggle(service.id)}
-                    className={`p-6 rounded-xl border-2 transition-all ${
+                    className={`p-4 rounded-xl border-2 transition-all ${
                       isSelected
                         ? "border-primary bg-primary/10 dark:bg-primary/5"
                         : "border-border dark:border-slate-800 bg-background hover:border-primary/50"
                     }`}
                   >
-                    <Icon className={`w-8 h-8 mb-3 ${isSelected ? "text-primary" : "text-muted-foreground"}`} />
+                    <Icon className={`w-6 h-6 mb-2 ${isSelected ? "text-primary" : "text-muted-foreground"}`} />
                     <h3 className="font-semibold text-foreground text-left">
                       {service.name}
                     </h3>
@@ -312,7 +314,7 @@ export default function FindTutor() {
         </section>
 
         {/* Filters Section */}
-        <section className="py-4 lg:py-6 border-b border-border dark:border-slate-800">
+        <section className="pt-4 pb-2 lg:pt-4 lg:pb-2 border-b border-border dark:border-slate-800">
           <div className="container mx-auto px-4 sm:px-6 lg:px-8">
             {/* Full-width Search Box */}
             <div className="mb-4">
@@ -336,200 +338,189 @@ export default function FindTutor() {
             {/* Filter Categories in Single Line */}
             <div className="flex flex-wrap gap-2 mb-4">
               {/* Price Range Category */}
-              <div className="relative">
-                <button
-                  onClick={() =>
-                    setExpandedFilter(
-                      expandedFilter === "price" ? null : "price"
-                    )
-                  }
-                  className={`px-4 py-2 rounded-lg font-medium text-sm transition-all flex items-center gap-2 ${
-                    expandedFilter === "price" || filters.priceRange
-                      ? "bg-primary text-primary-foreground"
-                      : "bg-muted text-foreground hover:bg-primary/20"
+              <button
+                onClick={() =>
+                  setExpandedFilter(
+                    expandedFilter === "price" ? null : "price"
+                  )
+                }
+                className={`px-4 py-2 rounded-lg font-medium text-sm transition-all flex items-center gap-2 ${
+                  expandedFilter === "price" || filters.priceRange
+                    ? "bg-primary text-primary-foreground"
+                    : "bg-muted text-foreground hover:bg-primary/20"
+                }`}
+              >
+                Price Range
+                <ChevronDown
+                  className={`w-4 h-4 transition-transform ${
+                    expandedFilter === "price" ? "rotate-180" : ""
                   }`}
-                >
-                  Price Range
-                  <ChevronDown
-                    className={`w-4 h-4 transition-transform ${
-                      expandedFilter === "price" ? "rotate-180" : ""
-                    }`}
-                  />
-                </button>
-                {expandedFilter === "price" && (
-                  <div className="absolute top-full left-0 mt-2 bg-white dark:bg-slate-900 border border-border dark:border-slate-800 rounded-lg p-3 z-10 whitespace-nowrap shadow-lg">
-                    <div className="flex flex-col gap-2">
-                      {priceOptions.map((option) => (
-                        <button
-                          key={option.label}
-                          onClick={() => {
-                            setFilters((prev) => ({
-                              ...prev,
-                              priceRange:
-                                prev.priceRange === option.label
-                                  ? ""
-                                  : option.label,
-                            }));
-                            setExpandedFilter(null);
-                          }}
-                          className={`px-3 py-1.5 rounded text-xs font-medium transition-all text-left ${
-                            filters.priceRange === option.label
-                              ? "bg-primary text-primary-foreground"
-                              : "bg-muted text-foreground hover:bg-primary/20"
-                          }`}
-                        >
-                          {option.label}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </div>
+                />
+              </button>
 
               {/* Availability Category */}
-              <div className="relative">
-                <button
-                  onClick={() =>
-                    setExpandedFilter(
-                      expandedFilter === "availability" ? null : "availability"
-                    )
-                  }
-                  className={`px-4 py-2 rounded-lg font-medium text-sm transition-all flex items-center gap-2 ${
-                    expandedFilter === "availability" || filters.availability
-                      ? "bg-primary text-primary-foreground"
-                      : "bg-muted text-foreground hover:bg-primary/20"
+              <button
+                onClick={() =>
+                  setExpandedFilter(
+                    expandedFilter === "availability" ? null : "availability"
+                  )
+                }
+                className={`px-4 py-2 rounded-lg font-medium text-sm transition-all flex items-center gap-2 ${
+                  expandedFilter === "availability" || filters.availability
+                    ? "bg-primary text-primary-foreground"
+                    : "bg-muted text-foreground hover:bg-primary/20"
+                }`}
+              >
+                Availability
+                <ChevronDown
+                  className={`w-4 h-4 transition-transform ${
+                    expandedFilter === "availability" ? "rotate-180" : ""
                   }`}
-                >
-                  Availability
-                  <ChevronDown
-                    className={`w-4 h-4 transition-transform ${
-                      expandedFilter === "availability" ? "rotate-180" : ""
-                    }`}
-                  />
-                </button>
-                {expandedFilter === "availability" && (
-                  <div className="absolute top-full left-0 mt-2 bg-white dark:bg-slate-900 border border-border dark:border-slate-800 rounded-lg p-3 z-10 whitespace-nowrap shadow-lg">
-                    <div className="flex flex-col gap-2">
-                      {availabilityOptions.map((option) => (
-                        <button
-                          key={option}
-                          onClick={() => {
-                            setFilters((prev) => ({
-                              ...prev,
-                              availability:
-                                prev.availability === option ? "" : option,
-                            }));
-                            setExpandedFilter(null);
-                          }}
-                          className={`px-3 py-1.5 rounded text-xs font-medium transition-all text-left ${
-                            filters.availability === option
-                              ? "bg-primary text-primary-foreground"
-                              : "bg-muted text-foreground hover:bg-primary/20"
-                          }`}
-                        >
-                          {option}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </div>
+                />
+              </button>
 
               {/* Rating Category */}
-              <div className="relative">
-                <button
-                  onClick={() =>
-                    setExpandedFilter(expandedFilter === "rating" ? null : "rating")
-                  }
-                  className={`px-4 py-2 rounded-lg font-medium text-sm transition-all flex items-center gap-2 ${
-                    expandedFilter === "rating" || filters.minRating
-                      ? "bg-primary text-primary-foreground"
-                      : "bg-muted text-foreground hover:bg-primary/20"
+              <button
+                onClick={() =>
+                  setExpandedFilter(expandedFilter === "rating" ? null : "rating")
+                }
+                className={`px-4 py-2 rounded-lg font-medium text-sm transition-all flex items-center gap-2 ${
+                  expandedFilter === "rating" || filters.minRating
+                    ? "bg-primary text-primary-foreground"
+                    : "bg-muted text-foreground hover:bg-primary/20"
+                }`}
+              >
+                Rating
+                <ChevronDown
+                  className={`w-4 h-4 transition-transform ${
+                    expandedFilter === "rating" ? "rotate-180" : ""
                   }`}
-                >
-                  Rating
-                  <ChevronDown
-                    className={`w-4 h-4 transition-transform ${
-                      expandedFilter === "rating" ? "rotate-180" : ""
-                    }`}
-                  />
-                </button>
-                {expandedFilter === "rating" && (
-                  <div className="absolute top-full left-0 mt-2 bg-white dark:bg-slate-900 border border-border dark:border-slate-800 rounded-lg p-3 z-10 whitespace-nowrap shadow-lg">
-                    <div className="flex flex-col gap-2">
-                      {ratingOptions.map((option) => (
-                        <button
-                          key={option}
-                          onClick={() => {
-                            setFilters((prev) => ({
-                              ...prev,
-                              minRating: prev.minRating === option ? "" : option,
-                            }));
-                            setExpandedFilter(null);
-                          }}
-                          className={`px-3 py-1.5 rounded text-xs font-medium transition-all text-left ${
-                            filters.minRating === option
-                              ? "bg-primary text-primary-foreground"
-                              : "bg-muted text-foreground hover:bg-primary/20"
-                          }`}
-                        >
-                          {option} Stars
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </div>
+                />
+              </button>
 
               {/* Qualification Category */}
-              <div className="relative">
-                <button
-                  onClick={() =>
-                    setExpandedFilter(
-                      expandedFilter === "qualification" ? null : "qualification"
-                    )
-                  }
-                  className={`px-4 py-2 rounded-lg font-medium text-sm transition-all flex items-center gap-2 ${
-                    expandedFilter === "qualification" || filters.qualification
-                      ? "bg-primary text-primary-foreground"
-                      : "bg-muted text-foreground hover:bg-primary/20"
+              <button
+                onClick={() =>
+                  setExpandedFilter(
+                    expandedFilter === "qualification" ? null : "qualification"
+                  )
+                }
+                className={`px-4 py-2 rounded-lg font-medium text-sm transition-all flex items-center gap-2 ${
+                  expandedFilter === "qualification" || filters.qualification
+                    ? "bg-primary text-primary-foreground"
+                    : "bg-muted text-foreground hover:bg-primary/20"
+                }`}
+              >
+                Qualification
+                <ChevronDown
+                  className={`w-4 h-4 transition-transform ${
+                    expandedFilter === "qualification" ? "rotate-180" : ""
                   }`}
-                >
-                  Qualification
-                  <ChevronDown
-                    className={`w-4 h-4 transition-transform ${
-                      expandedFilter === "qualification" ? "rotate-180" : ""
-                    }`}
-                  />
-                </button>
-                {expandedFilter === "qualification" && (
-                  <div className="absolute top-full left-0 mt-2 bg-white dark:bg-slate-900 border border-border dark:border-slate-800 rounded-lg p-3 z-10 whitespace-nowrap shadow-lg max-h-48 overflow-y-auto">
-                    <div className="flex flex-col gap-2">
-                      {qualificationOptions.map((option) => (
-                        <button
-                          key={option}
-                          onClick={() => {
-                            setFilters((prev) => ({
-                              ...prev,
-                              qualification:
-                                prev.qualification === option ? "" : option,
-                            }));
-                            setExpandedFilter(null);
-                          }}
-                          className={`px-3 py-1.5 rounded text-xs font-medium transition-all text-left ${
-                            filters.qualification === option
-                              ? "bg-primary text-primary-foreground"
-                              : "bg-muted text-foreground hover:bg-primary/20"
-                          }`}
-                        >
-                          {option}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </div>
+                />
+              </button>
             </div>
+
+            {/* Expanded Options - Display in next line */}
+            {expandedFilter === "price" && (
+              <div className="flex flex-wrap gap-2 mb-4 ml-2">
+                {priceOptions.map((option) => (
+                  <button
+                    key={option.label}
+                    onClick={() => {
+                      setFilters((prev) => ({
+                        ...prev,
+                        priceRange:
+                          prev.priceRange === option.label
+                            ? ""
+                            : option.label,
+                      }));
+                      setExpandedFilter(null);
+                    }}
+                    className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                      filters.priceRange === option.label
+                        ? "bg-primary text-primary-foreground"
+                        : "bg-muted text-foreground hover:bg-primary/20"
+                    }`}
+                  >
+                    {option.label}
+                  </button>
+                ))}
+              </div>
+            )}
+
+            {expandedFilter === "availability" && (
+              <div className="flex flex-wrap gap-2 mb-4 ml-2">
+                {availabilityOptions.map((option) => (
+                  <button
+                    key={option}
+                    onClick={() => {
+                      setFilters((prev) => ({
+                        ...prev,
+                        availability:
+                          prev.availability === option ? "" : option,
+                      }));
+                      setExpandedFilter(null);
+                    }}
+                    className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                      filters.availability === option
+                        ? "bg-primary text-primary-foreground"
+                        : "bg-muted text-foreground hover:bg-primary/20"
+                    }`}
+                  >
+                    {option}
+                  </button>
+                ))}
+              </div>
+            )}
+
+            {expandedFilter === "rating" && (
+              <div className="flex flex-wrap gap-2 mb-4 ml-2">
+                {ratingOptions.map((option) => (
+                  <button
+                    key={option}
+                    onClick={() => {
+                      setFilters((prev) => ({
+                        ...prev,
+                        minRating: prev.minRating === option ? "" : option,
+                      }));
+                      setExpandedFilter(null);
+                    }}
+                    className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                      filters.minRating === option
+                        ? "bg-primary text-primary-foreground"
+                        : "bg-muted text-foreground hover:bg-primary/20"
+                    }`}
+                  >
+                    {option} Stars
+                  </button>
+                ))}
+              </div>
+            )}
+
+            {expandedFilter === "qualification" && (
+              <div className="flex flex-wrap gap-2 mb-4 ml-2">
+                {qualificationOptions.map((option) => (
+                  <button
+                    key={option}
+                    onClick={() => {
+                      setFilters((prev) => ({
+                        ...prev,
+                        qualification:
+                          prev.qualification === option ? "" : option,
+                      }));
+                      setExpandedFilter(null);
+                    }}
+                    className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                      filters.qualification === option
+                        ? "bg-primary text-primary-foreground"
+                        : "bg-muted text-foreground hover:bg-primary/20"
+                    }`}
+                  >
+                    {option}
+                  </button>
+                ))}
+              </div>
+            )}
 
             {/* Clear Filters Button */}
             {(filters.searchQuery ||
@@ -550,7 +541,7 @@ export default function FindTutor() {
                   setSelectedServices([]);
                   setExpandedFilter(null);
                 }}
-                className="px-4 py-2 rounded-lg border border-border dark:border-slate-800 text-sm font-medium text-foreground hover:bg-muted dark:hover:bg-slate-800 transition-colors"
+                className="mt-4 px-4 py-2 rounded-lg border border-border dark:border-slate-800 text-sm font-medium text-foreground hover:bg-muted dark:hover:bg-slate-800 transition-colors"
               >
                 Clear All Filters
               </button>
@@ -653,7 +644,10 @@ export default function FindTutor() {
                               </div>
                             </div>
 
-                            <button className="px-4 py-2 rounded-lg border-2 border-primary text-primary font-medium text-sm hover:bg-primary-50 dark:hover:bg-slate-800 transition-colors">
+                            <button 
+                              onClick={() => navigate(`/tutor/${tutor.id}`)}
+                              className="px-4 py-2 rounded-lg border-2 border-primary text-primary font-medium text-sm hover:bg-primary-50 dark:hover:bg-slate-800 transition-colors"
+                            >
                               View Profile
                             </button>
                           </div>
@@ -694,7 +688,10 @@ export default function FindTutor() {
 
                     {/* Mobile CTA */}
                     <div className="md:hidden mt-4 flex gap-3">
-                      <button className="flex-1 px-4 py-2 rounded-lg border-2 border-primary text-primary font-medium text-sm hover:bg-primary-50 dark:hover:bg-slate-800 transition-colors">
+                      <button 
+                        onClick={() => navigate(`/tutor/${tutor.id}`)}
+                        className="flex-1 px-4 py-2 rounded-lg border-2 border-primary text-primary font-medium text-sm hover:bg-primary-50 dark:hover:bg-slate-800 transition-colors"
+                      >
                         View Profile
                       </button>
                       <button className="flex-1 px-4 py-2 rounded-lg bg-primary text-primary-foreground font-medium text-sm hover:bg-primary-600 transition-colors">

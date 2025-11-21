@@ -3,9 +3,11 @@ import { Link, useNavigate } from "react-router-dom";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { Check } from "lucide-react";
+import { useAuth } from "@/contexts/AuthContext";
 
 export default function SignUp() {
   const navigate = useNavigate();
+  const { signup } = useAuth();
   const [formData, setFormData] = useState({
     firstName: "",
     lastName: "",
@@ -93,16 +95,17 @@ export default function SignUp() {
     }
 
     setIsLoading(true);
-    // Simulate API call
-    setTimeout(() => {
-      console.log("Sign up data:", {
-        ...formData,
-        services: selectedServices,
-      });
-      setIsLoading(false);
+    try {
+      const fullName = `${formData.firstName} ${formData.lastName}`;
+      await signup(fullName, formData.email, formData.password);
       // Redirect to find tutor page
       navigate("/find-tutor");
-    }, 1500);
+    } catch (error) {
+      console.error("Signup error:", error);
+      setErrors({ email: "Failed to create account. Please try again." });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (

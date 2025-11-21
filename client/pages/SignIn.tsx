@@ -3,9 +3,11 @@ import { Link, useNavigate } from "react-router-dom";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { Check, Eye, EyeOff } from "lucide-react";
+import { useAuth } from "@/contexts/AuthContext";
 
 export default function SignIn() {
   const navigate = useNavigate();
+  const { login } = useAuth();
   const [formData, setFormData] = useState({
     email: "",
     password: "",
@@ -55,16 +57,16 @@ export default function SignIn() {
     }
 
     setIsLoading(true);
-    // Simulate API call
-    setTimeout(() => {
-      console.log("Sign in data:", {
-        ...formData,
-        rememberMe,
-      });
-      setIsLoading(false);
+    try {
+      await login(formData.email, formData.password);
       // Redirect to find tutor page
       navigate("/find-tutor");
-    }, 1500);
+    } catch (error) {
+      console.error("Login error:", error);
+      setErrors({ email: "Invalid email or password" });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
