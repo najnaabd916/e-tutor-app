@@ -1,4 +1,5 @@
 import { useParams, useNavigate } from "react-router-dom";
+import { useState } from "react";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import {
@@ -13,6 +14,9 @@ import {
   CheckCircle,
   ArrowLeft,
   MessageCircle,
+  X,
+  ChevronLeft,
+  ChevronRight,
 } from "lucide-react";
 
 interface Tutor {
@@ -275,8 +279,46 @@ const mockTutors: Tutor[] = [
 export default function TutorProfile() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const [isBookingModalOpen, setIsBookingModalOpen] = useState(false);
+  const [selectedDuration, setSelectedDuration] = useState<"25" | "50">("50");
+  const [selectedDate, setSelectedDate] = useState<Date | null>(null);
+  const [selectedTime, setSelectedTime] = useState<string | null>(null);
   
   const tutor = mockTutors.find(t => t.id === Number(id));
+
+  // Generate dates for the next 7 days
+  const generateDates = () => {
+    const dates = [];
+    const today = new Date();
+    for (let i = 0; i < 7; i++) {
+      const date = new Date(today);
+      date.setDate(today.getDate() + i);
+      dates.push(date);
+    }
+    return dates;
+  };
+
+  const dates = generateDates();
+  const [currentWeekStart, setCurrentWeekStart] = useState(0);
+
+  // Available time slots
+  const timeSlots = ["08:00", "09:00", "10:00", "14:00", "15:00", "16:00", "18:00", "19:00", "20:00", "21:00", "22:00", "23:00"];
+
+  const formatDate = (date: Date) => {
+    const days = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+    return {
+      day: days[date.getDay()],
+      date: date.getDate(),
+    };
+  };
+
+  const formatDateRange = (startDate: Date) => {
+    const endDate = new Date(startDate);
+    endDate.setDate(startDate.getDate() + 6);
+    
+    const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+    return `${months[startDate.getMonth()]} ${startDate.getDate()} – ${months[endDate.getMonth()]} ${endDate.getDate()}, ${startDate.getFullYear()}`;
+  };
 
   if (!tutor) {
     return (
@@ -320,68 +362,7 @@ export default function TutorProfile() {
         <section className="py-8 lg:py-10 border-b border-border dark:border-slate-800">
           <div className="container mx-auto px-4 sm:px-6 lg:px-8">
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-              {/* Left: Photo and Basic Info */}
-              <div className="lg:col-span-1">
-                <div className="bg-white dark:bg-slate-900 border border-border dark:border-slate-800 rounded-xl p-6 sticky top-4">
-                  <img
-                    src={tutor.photo}
-                    alt={tutor.name}
-                    className="w-full aspect-square rounded-xl object-cover mb-4"
-                  />
-                  
-                  <h1 className="text-2xl font-bold text-foreground mb-2">{tutor.name}</h1>
-                  
-                  <div className="flex items-center gap-2 mb-4">
-                    <Star className="w-5 h-5 fill-amber-400 text-amber-400" />
-                    <span className="text-lg font-semibold text-foreground">{tutor.rating}</span>
-                    <span className="text-sm text-muted-foreground">({tutor.reviews} reviews)</span>
-                  </div>
-
-                  <div className="space-y-3 mb-6">
-                    <div className="flex items-center gap-2">
-                      <MapPin className="w-4 h-4 text-muted-foreground" />
-                      <span className="text-sm text-foreground">{tutor.location}</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Award className="w-4 h-4 text-muted-foreground" />
-                      <span className="text-sm text-foreground">{tutor.qualification}</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Clock className="w-4 h-4 text-muted-foreground" />
-                      <span className="text-sm text-foreground">{tutor.availability}</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Users className="w-4 h-4 text-muted-foreground" />
-                      <span className="text-sm text-foreground">{tutor.totalStudents} students taught</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <BookOpen className="w-4 h-4 text-muted-foreground" />
-                      <span className="text-sm text-foreground">{tutor.experience} years experience</span>
-                    </div>
-                  </div>
-
-                  <div className="border-t border-border dark:border-slate-800 pt-4 mb-4">
-                    <div className="flex items-center gap-2 justify-center mb-3">
-                      <DollarSign className="w-6 h-6 text-primary" />
-                      <span className="text-3xl font-bold text-primary">{tutor.hourlyRate}</span>
-                      <span className="text-muted-foreground">/hour</span>
-                    </div>
-                  </div>
-
-                  <div className="space-y-2">
-                    <button className="w-full px-6 py-3 rounded-lg bg-primary text-primary-foreground font-semibold hover:bg-primary/90 transition-colors flex items-center justify-center gap-2">
-                      <Calendar className="w-4 h-4" />
-                      Book a Lesson
-                    </button>
-                    <button className="w-full px-6 py-3 rounded-lg border-2 border-primary text-primary font-semibold hover:bg-primary/10 transition-colors flex items-center justify-center gap-2">
-                      <MessageCircle className="w-4 h-4" />
-                      Send Message
-                    </button>
-                  </div>
-                </div>
-              </div>
-
-              {/* Right: Detailed Info */}
+              {/* Left: Detailed Info */}
               <div className="lg:col-span-2 space-y-6">
                 {/* About */}
                 <div className="bg-white dark:bg-slate-900 border border-border dark:border-slate-800 rounded-xl p-6">
@@ -433,7 +414,7 @@ export default function TutorProfile() {
                 {/* Achievements */}
                 <div className="bg-white dark:bg-slate-900 border border-border dark:border-slate-800 rounded-xl p-6">
                   <h2 className="text-xl font-bold text-foreground mb-4">Achievements & Highlights</h2>
-                  <div className="space-y-3">
+                  <div className="space-y-2">
                     {tutor.achievements.map((achievement, index) => (
                       <div key={index} className="flex items-start gap-2">
                         <CheckCircle className="w-5 h-5 text-primary mt-0.5 flex-shrink-0" />
@@ -443,10 +424,219 @@ export default function TutorProfile() {
                   </div>
                 </div>
               </div>
+
+              {/* Right: Photo and Basic Info */}
+              <div className="lg:col-span-1 lg:order-last">
+                <div className="bg-white dark:bg-slate-900 border border-border dark:border-slate-800 rounded-xl p-4 lg:sticky lg:top-20">
+                  <img
+                    src={tutor.photo}
+                    alt={tutor.name}
+                    className="w-48 h-48 mx-auto rounded-xl object-cover mb-4"
+                  />
+                  
+                  <h1 className="text-2xl font-bold text-foreground mb-2">{tutor.name}</h1>
+                  
+                  <div className="flex items-center gap-2 mb-4">
+                    <Star className="w-5 h-5 fill-amber-400 text-amber-400" />
+                    <span className="text-lg font-semibold text-foreground">{tutor.rating}</span>
+                    <span className="text-sm text-muted-foreground">({tutor.reviews} reviews)</span>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-x-4 gap-y-3 mb-6">
+                    <div className="flex items-center gap-2">
+                      <MapPin className="w-4 h-4 text-muted-foreground flex-shrink-0" />
+                      <span className="text-sm text-foreground">{tutor.location}</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Award className="w-4 h-4 text-muted-foreground flex-shrink-0" />
+                      <span className="text-sm text-foreground">{tutor.qualification}</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Clock className="w-4 h-4 text-muted-foreground flex-shrink-0" />
+                      <span className="text-sm text-foreground">{tutor.availability}</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Users className="w-4 h-4 text-muted-foreground flex-shrink-0" />
+                      <span className="text-sm text-foreground">{tutor.totalStudents} students</span>
+                    </div>
+                    <div className="flex items-center gap-2 col-span-2">
+                      <BookOpen className="w-4 h-4 text-muted-foreground flex-shrink-0" />
+                      <span className="text-sm text-foreground">{tutor.experience} years experience</span>
+                    </div>
+                  </div>
+
+                  <div className="border-t border-border dark:border-slate-800 pt-4 mb-4">
+                    <div className="flex items-center gap-2 justify-center mb-3">
+                      <DollarSign className="w-6 h-6 text-primary" />
+                      <span className="text-3xl font-bold text-primary">{tutor.hourlyRate}</span>
+                      <span className="text-muted-foreground">/hour</span>
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <button 
+                      onClick={() => setIsBookingModalOpen(true)}
+                      className="w-full px-6 py-3 rounded-lg bg-primary text-primary-foreground font-semibold hover:bg-primary/90 transition-colors flex items-center justify-center gap-2"
+                    >
+                      <Calendar className="w-4 h-4" />
+                      Book trial lesson
+                    </button>
+                    <button className="w-full px-6 py-3 rounded-lg border-2 border-primary text-primary font-semibold hover:bg-primary/10 transition-colors flex items-center justify-center gap-2">
+                      <MessageCircle className="w-4 h-4" />
+                      Send Message
+                    </button>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </section>
       </main>
+
+      {/* Booking Modal */}
+      {isBookingModalOpen && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white dark:bg-slate-900 rounded-2xl max-w-lg w-full max-h-[90vh] overflow-y-auto">
+            {/* Modal Header */}
+            <div className="sticky top-0 bg-white dark:bg-slate-900 border-b border-border dark:border-slate-800 p-6 flex items-start justify-between">
+              <div className="flex items-start gap-3">
+                <img
+                  src={tutor.photo}
+                  alt={tutor.name}
+                  className="w-12 h-12 rounded-full object-cover"
+                />
+                <div>
+                  <h2 className="text-xl font-bold text-foreground">Book a trial lesson</h2>
+                  <p className="text-sm text-muted-foreground">to discuss your level and learning plan</p>
+                </div>
+              </div>
+              <button
+                onClick={() => setIsBookingModalOpen(false)}
+                className="text-muted-foreground hover:text-foreground transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Modal Content */}
+            <div className="p-6 space-y-6">
+              {/* Duration Selection */}
+              <div>
+                <div className="flex gap-3">
+                  <button
+                    onClick={() => setSelectedDuration("25")}
+                    className={`flex-1 py-3 px-4 rounded-lg border-2 font-medium transition-colors ${
+                      selectedDuration === "25"
+                        ? "border-primary bg-primary/5 text-primary"
+                        : "border-border dark:border-slate-700 text-foreground hover:border-primary/50"
+                    }`}
+                  >
+                    25 mins
+                  </button>
+                  <button
+                    onClick={() => setSelectedDuration("50")}
+                    className={`flex-1 py-3 px-4 rounded-lg border-2 font-medium transition-colors ${
+                      selectedDuration === "50"
+                        ? "border-primary bg-primary/5 text-primary"
+                        : "border-border dark:border-slate-700 text-foreground hover:border-primary/50"
+                    }`}
+                  >
+                    50 mins
+                  </button>
+                </div>
+              </div>
+
+              {/* Date Selection */}
+              <div>
+                <div className="flex items-center justify-between mb-4">
+                  <button
+                    onClick={() => setCurrentWeekStart(Math.max(0, currentWeekStart - 7))}
+                    disabled={currentWeekStart === 0}
+                    className="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    <ChevronLeft className="w-5 h-5" />
+                  </button>
+                  <span className="text-sm font-medium text-foreground">
+                    {formatDateRange(dates[currentWeekStart])}
+                  </span>
+                  <button
+                    onClick={() => setCurrentWeekStart(currentWeekStart + 7)}
+                    className="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800"
+                  >
+                    <ChevronRight className="w-5 h-5" />
+                  </button>
+                </div>
+
+                <div className="grid grid-cols-7 gap-2 mb-4">
+                  {dates.slice(currentWeekStart, currentWeekStart + 7).map((date, index) => {
+                    const formatted = formatDate(date);
+                    const isSelected = selectedDate?.toDateString() === date.toDateString();
+                    const isToday = date.toDateString() === new Date().toDateString();
+                    
+                    return (
+                      <button
+                        key={index}
+                        onClick={() => setSelectedDate(date)}
+                        className={`flex flex-col items-center py-3 px-2 rounded-lg border-2 transition-colors ${
+                          isSelected
+                            ? "border-primary bg-primary text-primary-foreground"
+                            : isToday
+                            ? "border-primary/50 bg-primary/5 text-primary"
+                            : "border-border dark:border-slate-700 text-foreground hover:border-primary/50"
+                        }`}
+                      >
+                        <span className="text-xs font-medium mb-1">{formatted.day}</span>
+                        <span className="text-lg font-bold">{formatted.date}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Time Zone Info */}
+              <div className="bg-slate-50 dark:bg-slate-800/50 rounded-lg p-3">
+                <p className="text-sm text-muted-foreground">
+                  <Clock className="w-4 h-4 inline mr-1" />
+                  In your time zone, Asia/Kolkata (GMT +5:30)
+                </p>
+              </div>
+
+              {/* Time Slots */}
+              {selectedDate && (
+                <div>
+                  <h3 className="font-semibold text-foreground mb-3 flex items-center gap-2">
+                    <Clock className="w-4 h-4" />
+                    Evening
+                  </h3>
+                  <div className="grid grid-cols-3 gap-2">
+                    {timeSlots.map((time) => (
+                      <button
+                        key={time}
+                        onClick={() => setSelectedTime(time)}
+                        className={`py-2 px-3 rounded-lg border-2 text-sm font-medium transition-colors ${
+                          selectedTime === time
+                            ? "border-primary bg-primary/5 text-primary"
+                            : "border-border dark:border-slate-700 text-foreground hover:border-primary/50"
+                        }`}
+                      >
+                        {time}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Continue Button */}
+              <button
+                disabled={!selectedDate || !selectedTime}
+                className="w-full py-3 px-6 rounded-lg bg-primary text-primary-foreground font-semibold hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Continue
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       <Footer />
     </div>

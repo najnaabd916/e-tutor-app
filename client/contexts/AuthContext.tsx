@@ -4,13 +4,14 @@ interface User {
   id: string;
   name: string;
   email: string;
+  role: "student" | "tutor";
 }
 
 interface AuthContextType {
   user: User | null;
   login: (email: string, password: string) => Promise<void>;
   logout: () => void;
-  signup: (name: string, email: string, password: string) => Promise<void>;
+  signup: (name: string, email: string, password: string, role: "student" | "tutor") => Promise<void>;
   isAuthenticated: boolean;
 }
 
@@ -33,17 +34,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       id: "1",
       name: email.split("@")[0],
       email: email,
+      role: "student", // Default to student for login
     };
     setUser(mockUser);
     localStorage.setItem("user", JSON.stringify(mockUser));
   };
 
-  const signup = async (name: string, email: string, password: string) => {
+  const signup = async (name: string, email: string, password: string, role: "student" | "tutor") => {
     // Mock signup - in real app, this would call an API
     const mockUser: User = {
       id: "1",
       name: name,
       email: email,
+      role: role,
     };
     setUser(mockUser);
     localStorage.setItem("user", JSON.stringify(mockUser));

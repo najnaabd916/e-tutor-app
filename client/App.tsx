@@ -12,6 +12,7 @@ import SignUp from "./pages/SignUp";
 import SignIn from "./pages/SignIn";
 import FindTutor from "./pages/FindTutor";
 import TutorProfile from "./pages/TutorProfile";
+import SelectServices from "./pages/SelectServices";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -31,6 +32,7 @@ export function App() {
             <Route path="/group-classes" element={<GroupClasses />} />
             <Route path="/signup" element={<SignUp />} />
             <Route path="/signin" element={<SignIn />} />
+            <Route path="/select-services" element={<SelectServices />} />
             <Route path="/find-tutor" element={<FindTutor />} />
             <Route path="/tutor/:id" element={<TutorProfile />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
