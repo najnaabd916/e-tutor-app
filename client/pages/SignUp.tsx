@@ -3,36 +3,46 @@ import { Link, useNavigate } from "react-router-dom";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { Check } from "lucide-react";
+import { useAuth } from "@/contexts/AuthContext";
 
 export default function SignUp() {
   const navigate = useNavigate();
+  const { signup } = useAuth();
   const [formData, setFormData] = useState({
     firstName: "",
     lastName: "",
     email: "",
     password: "",
+    country: "",
+    role: "" as "student" | "tutor" | "",
   });
 
-  const [selectedServices, setSelectedServices] = useState<string[]>([]);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isLoading, setIsLoading] = useState(false);
 
-  const services = [
-    {
-      id: "language",
-      name: "Language Tuition",
-      description: "Learn new languages with native speakers",
-    },
-    {
-      id: "school",
-      name: "School Tuition",
-      description: "Excel in all academic subjects",
-    },
-    {
-      id: "group",
-      name: "Group Classes",
-      description: "Learn collaboratively with peers",
-    },
+  const countries = [
+    "United States",
+    "United Kingdom",
+    "Canada",
+    "Australia",
+    "India",
+    "Germany",
+    "France",
+    "Spain",
+    "Italy",
+    "Brazil",
+    "Mexico",
+    "Japan",
+    "China",
+    "South Korea",
+    "Singapore",
+    "United Arab Emirates",
+    "Saudi Arabia",
+    "Pakistan",
+    "Bangladesh",
+    "Nigeria",
+    "South Africa",
+    "Other",
   ];
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -50,17 +60,12 @@ export default function SignUp() {
     }
   };
 
-  const handleServiceToggle = (serviceId: string) => {
-    setSelectedServices((prev) =>
-      prev.includes(serviceId)
-        ? prev.filter((id) => id !== serviceId)
-        : [...prev, serviceId]
-    );
-  };
-
   const validateForm = () => {
     const newErrors: Record<string, string> = {};
 
+    if (!formData.role) {
+      newErrors.role = "Please select whether you're signing up as a student or tutor";
+    }
     if (!formData.firstName.trim()) {
       newErrors.firstName = "First name is required";
     }
@@ -77,8 +82,8 @@ export default function SignUp() {
     } else if (formData.password.length < 6) {
       newErrors.password = "Password must be at least 6 characters";
     }
-    if (selectedServices.length === 0) {
-      newErrors.services = "Please select at least one service";
+    if (!formData.country) {
+      newErrors.country = "Please select your country";
     }
 
     setErrors(newErrors);
@@ -93,16 +98,17 @@ export default function SignUp() {
     }
 
     setIsLoading(true);
-    // Simulate API call
-    setTimeout(() => {
-      console.log("Sign up data:", {
-        ...formData,
-        services: selectedServices,
-      });
+    try {
+      const fullName = `${formData.firstName} ${formData.lastName}`;
+      await signup(fullName, formData.email, formData.password, formData.role as "student" | "tutor");
+      // Redirect to select services page
+      navigate("/select-services");
+    } catch (error) {
+      console.error("Signup error:", error);
+      setErrors({ email: "Failed to create account. Please try again." });
+    } finally {
       setIsLoading(false);
-      // Redirect to find tutor page
-      navigate("/find-tutor");
-    }, 1500);
+    }
   };
 
   return (
@@ -160,6 +166,56 @@ export default function SignUp() {
                   </h2>
 
                   <form onSubmit={handleSubmit} className="space-y-6">
+                    {/* Role Selection */}
+                    <div>
+                      <label className="block text-sm font-medium text-foreground mb-3">
+                        I want to sign up as:
+                      </label>
+                      <div className="grid grid-cols-2 gap-3">
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setFormData((prev) => ({ ...prev, role: "student" }))
+                          }
+                          className={`p-4 rounded-lg border-2 transition-all text-left ${
+                            formData.role === "student"
+                              ? "border-primary bg-primary/10 dark:bg-primary/5"
+                              : "border-border dark:border-slate-800 hover:border-primary/50"
+                          }`}
+                        >
+                          <div className="font-semibold text-foreground mb-1">
+                            Student
+                          </div>
+                          <div className="text-xs text-muted-foreground">
+                            Find and learn from tutors
+                          </div>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setFormData((prev) => ({ ...prev, role: "tutor" }))
+                          }
+                          className={`p-4 rounded-lg border-2 transition-all text-left ${
+                            formData.role === "tutor"
+                              ? "border-primary bg-primary/10 dark:bg-primary/5"
+                              : "border-border dark:border-slate-800 hover:border-primary/50"
+                          }`}
+                        >
+                          <div className="font-semibold text-foreground mb-1">
+                            Tutor
+                          </div>
+                          <div className="text-xs text-muted-foreground">
+                            Teach and earn money
+                          </div>
+                        </button>
+                      </div>
+                      {errors.role && (
+                        <p className="text-sm text-destructive mt-2">
+                          {errors.role}
+                        </p>
+                      )}
+                    </div>
+
                     {/* First Name */}
                     <div>
                       <label
@@ -272,43 +328,46 @@ export default function SignUp() {
                       )}
                     </div>
 
-                    {/* Services Selection */}
+                    {/* Country Selection */}
                     <div>
-                      <label className="block text-sm font-medium text-foreground mb-3">
-                        Select Services
+                      <label
+                        htmlFor="country"
+                        className="block text-sm font-medium text-foreground mb-2"
+                      >
+                        Country
                       </label>
-                      <div className="space-y-3">
-                        {services.map((service) => (
-                          <div
-                            key={service.id}
-                            className="flex items-start gap-3 p-3 rounded-lg border border-border dark:border-slate-800 hover:border-primary/50 hover:bg-primary/5 dark:hover:bg-primary/10 transition-all cursor-pointer"
-                            onClick={() => handleServiceToggle(service.id)}
-                          >
-                            <div
-                              className={`flex-shrink-0 w-5 h-5 rounded border mt-0.5 flex items-center justify-center transition-all ${
-                                selectedServices.includes(service.id)
-                                  ? "bg-primary border-primary"
-                                  : "border-input"
-                              }`}
-                            >
-                              {selectedServices.includes(service.id) && (
-                                <Check className="w-3 h-3 text-primary-foreground" />
-                              )}
-                            </div>
-                            <div className="flex-grow">
-                              <p className="font-medium text-foreground text-sm">
-                                {service.name}
-                              </p>
-                              <p className="text-xs text-muted-foreground">
-                                {service.description}
-                              </p>
-                            </div>
-                          </div>
+                      <select
+                        id="country"
+                        name="country"
+                        value={formData.country}
+                        onChange={(e) => {
+                          setFormData((prev) => ({
+                            ...prev,
+                            country: e.target.value,
+                          }));
+                          if (errors.country) {
+                            setErrors((prev) => ({
+                              ...prev,
+                              country: "",
+                            }));
+                          }
+                        }}
+                        className={`w-full px-4 py-2 rounded-lg border ${
+                          errors.country
+                            ? "border-destructive bg-destructive/5"
+                            : "border-input bg-background"
+                        } text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all`}
+                      >
+                        <option value="">Select your country</option>
+                        {countries.map((country) => (
+                          <option key={country} value={country}>
+                            {country}
+                          </option>
                         ))}
-                      </div>
-                      {errors.services && (
-                        <p className="text-sm text-destructive mt-2">
-                          {errors.services}
+                      </select>
+                      {errors.country && (
+                        <p className="text-sm text-destructive mt-1">
+                          {errors.country}
                         </p>
                       )}
                     </div>

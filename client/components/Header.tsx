@@ -1,10 +1,20 @@
-import { Link } from "react-router-dom";
-import { Menu, X } from "lucide-react";
+import { Link, useNavigate } from "react-router-dom";
+import { Menu, X, User, LogOut, Settings } from "lucide-react";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
+import { useAuth } from "@/contexts/AuthContext";
 
 export function Header() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [userMenuOpen, setUserMenuOpen] = useState(false);
+  const { user, logout, isAuthenticated } = useAuth();
+  const navigate = useNavigate();
+
+  const handleLogout = () => {
+    logout();
+    setUserMenuOpen(false);
+    navigate("/");
+  };
 
   const navLinks = [
     { href: "/", label: "Home" },
@@ -41,12 +51,51 @@ export function Header() {
           </nav>
 
           {/* CTA Button - Desktop */}
-          <Link
-            to="/signup"
-            className="hidden md:flex items-center justify-center px-6 py-2 rounded-lg bg-primary text-primary-foreground font-medium text-sm hover:bg-primary-600 transition-colors"
-          >
-            Get Started
-          </Link>
+          {isAuthenticated && user ? (
+            <div className="hidden md:block relative">
+              <button
+                onClick={() => setUserMenuOpen(!userMenuOpen)}
+                className="flex items-center gap-2 px-4 py-2 rounded-lg hover:bg-muted transition-colors"
+              >
+                <div className="w-8 h-8 bg-primary rounded-full flex items-center justify-center">
+                  <User className="w-4 h-4 text-primary-foreground" />
+                </div>
+                <span className="text-sm font-medium text-foreground">
+                  Hi, {user.name}
+                </span>
+              </button>
+
+              {/* User Dropdown Menu */}
+              {userMenuOpen && (
+                <div className="absolute right-0 mt-2 w-48 bg-white dark:bg-slate-900 border border-border dark:border-slate-800 rounded-lg shadow-lg py-2 z-50">
+                  <button
+                    onClick={() => {
+                      setUserMenuOpen(false);
+                      navigate("/profile");
+                    }}
+                    className="w-full px-4 py-2 text-left text-sm text-foreground hover:bg-muted transition-colors flex items-center gap-2"
+                  >
+                    <Settings className="w-4 h-4" />
+                    Settings
+                  </button>
+                  <button
+                    onClick={handleLogout}
+                    className="w-full px-4 py-2 text-left text-sm text-foreground hover:bg-muted transition-colors flex items-center gap-2"
+                  >
+                    <LogOut className="w-4 h-4" />
+                    Logout
+                  </button>
+                </div>
+              )}
+            </div>
+          ) : (
+            <Link
+              to="/signup"
+              className="hidden md:flex items-center justify-center px-6 py-2 rounded-lg bg-primary text-primary-foreground font-medium text-sm hover:bg-primary-600 transition-colors"
+            >
+              Get Started
+            </Link>
+          )}
 
           {/* Mobile Menu Button */}
           <button
@@ -75,13 +124,48 @@ export function Header() {
                   {link.label}
                 </Link>
               ))}
-              <Link
-                to="/signup"
-                onClick={() => setMobileMenuOpen(false)}
-                className="mx-4 px-4 py-2 rounded-lg bg-primary text-primary-foreground font-medium text-sm hover:bg-primary-600 transition-colors block text-center"
-              >
-                Get Started
-              </Link>
+              {isAuthenticated && user ? (
+                <>
+                  <div className="mx-4 px-4 py-2 border-t border-border dark:border-slate-800 mt-2 pt-4">
+                    <div className="flex items-center gap-2 mb-3">
+                      <div className="w-8 h-8 bg-primary rounded-full flex items-center justify-center">
+                        <User className="w-4 h-4 text-primary-foreground" />
+                      </div>
+                      <span className="text-sm font-medium text-foreground">
+                        Hi, {user.name}
+                      </span>
+                    </div>
+                    <button
+                      onClick={() => {
+                        setMobileMenuOpen(false);
+                        navigate("/profile");
+                      }}
+                      className="w-full px-4 py-2 text-left text-sm text-foreground hover:bg-muted rounded-lg transition-colors flex items-center gap-2 mb-2"
+                    >
+                      <Settings className="w-4 h-4" />
+                      Settings
+                    </button>
+                    <button
+                      onClick={() => {
+                        setMobileMenuOpen(false);
+                        handleLogout();
+                      }}
+                      className="w-full px-4 py-2 text-left text-sm text-foreground hover:bg-muted rounded-lg transition-colors flex items-center gap-2"
+                    >
+                      <LogOut className="w-4 h-4" />
+                      Logout
+                    </button>
+                  </div>
+                </>
+              ) : (
+                <Link
+                  to="/signup"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="mx-4 px-4 py-2 rounded-lg bg-primary text-primary-foreground font-medium text-sm hover:bg-primary-600 transition-colors block text-center"
+                >
+                  Get Started
+                </Link>
+              )}
             </nav>
           </div>
         )}

@@ -1,4 +1,5 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import {
@@ -12,6 +13,10 @@ import {
   BookOpen,
   Users,
   ChevronDown,
+  X,
+  ChevronLeft,
+  ChevronRight,
+  Calendar,
 } from "lucide-react";
 
 interface Tutor {
@@ -28,6 +33,7 @@ interface Tutor {
   location: string;
   totalStudents: number;
   experience: number;
+  languages?: string[]; // Languages they teach (for language tutors)
 }
 
 // Mock tutor data
@@ -46,6 +52,7 @@ const mockTutors: Tutor[] = [
     location: "New York, USA",
     totalStudents: 320,
     experience: 8,
+    languages: ["English", "Spanish"],
   },
   {
     id: 2,
@@ -76,6 +83,7 @@ const mockTutors: Tutor[] = [
     location: "Los Angeles, USA",
     totalStudents: 210,
     experience: 6,
+    languages: ["Spanish", "English"],
   },
   {
     id: 4,
@@ -91,6 +99,7 @@ const mockTutors: Tutor[] = [
     location: "Boston, USA",
     totalStudents: 380,
     experience: 10,
+    languages: ["English"],
   },
   {
     id: 5,
@@ -106,6 +115,7 @@ const mockTutors: Tutor[] = [
     location: "Seattle, USA",
     totalStudents: 280,
     experience: 7,
+    languages: ["Japanese", "English"],
   },
   {
     id: 6,
@@ -136,6 +146,7 @@ const mockTutors: Tutor[] = [
     location: "Miami, USA",
     totalStudents: 190,
     experience: 5,
+    languages: ["Italian", "English"],
   },
   {
     id: 8,
@@ -155,6 +166,7 @@ const mockTutors: Tutor[] = [
 ];
 
 export default function FindTutor() {
+  const navigate = useNavigate();
   const [selectedServices, setSelectedServices] = useState<string[]>([]);
   const [filters, setFilters] = useState({
     searchQuery: "",
@@ -162,8 +174,84 @@ export default function FindTutor() {
     availability: "",
     minRating: "",
     qualification: "",
+    language: "",
   });
   const [expandedFilter, setExpandedFilter] = useState<string | null>(null);
+  const [isBookingModalOpen, setIsBookingModalOpen] = useState(false);
+  const [selectedTutor, setSelectedTutor] = useState<Tutor | null>(null);
+  const [selectedDuration, setSelectedDuration] = useState<"25" | "50">("50");
+  const [selectedDate, setSelectedDate] = useState<Date | null>(null);
+  const [selectedTime, setSelectedTime] = useState<string | null>(null);
+
+  // Generate dates for the next 7 days
+  const generateDates = () => {
+    const dates = [];
+    const today = new Date();
+    for (let i = 0; i < 7; i++) {
+      const date = new Date(today);
+      date.setDate(today.getDate() + i);
+      dates.push(date);
+    }
+    return dates;
+  };
+
+  const dates = generateDates();
+  const [currentWeekStart, setCurrentWeekStart] = useState(0);
+
+  // Available time slots
+  const timeSlots = ["08:00", "09:00", "10:00", "14:00", "15:00", "16:00", "18:00", "19:00", "20:00", "21:00", "22:00", "23:00"];
+
+  const formatDate = (date: Date) => {
+    const days = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+    return {
+      day: days[date.getDay()],
+      date: date.getDate(),
+    };
+  };
+
+  const formatDateRange = (startDate: Date) => {
+    const endDate = new Date(startDate);
+    endDate.setDate(startDate.getDate() + 6);
+    
+    const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+    return `${months[startDate.getMonth()]} ${startDate.getDate()} – ${months[endDate.getMonth()]} ${endDate.getDate()}, ${startDate.getFullYear()}`;
+  };
+
+  const handleBookLesson = (tutor: Tutor) => {
+    setSelectedTutor(tutor);
+    setIsBookingModalOpen(true);
+    setSelectedDate(null);
+    setSelectedTime(null);
+    setSelectedDuration("50");
+  };
+
+  // Load saved selections from localStorage on mount
+  useEffect(() => {
+    const savedServices = localStorage.getItem("selectedServices");
+    const savedLanguage = localStorage.getItem("selectedLanguage");
+    const savedGrade = localStorage.getItem("selectedGrade");
+
+    if (savedServices) {
+      try {
+        const services = JSON.parse(savedServices);
+        setSelectedServices(services);
+      } catch (e) {
+        console.error("Failed to parse saved services:", e);
+      }
+    }
+
+    if (savedLanguage) {
+      setFilters((prev) => ({
+        ...prev,
+        language: savedLanguage,
+      }));
+    }
+
+    // Clear the stored values after loading them
+    localStorage.removeItem("selectedServices");
+    localStorage.removeItem("selectedLanguage");
+    localStorage.removeItem("selectedGrade");
+  }, []);
 
   const services = [
     {
@@ -183,6 +271,21 @@ export default function FindTutor() {
     },
   ];
 
+  const availableLanguages = [
+    "English",
+    "Spanish",
+    "French",
+    "German",
+    "Italian",
+    "Portuguese",
+    "Chinese",
+    "Japanese",
+    "Korean",
+    "Arabic",
+    "Russian",
+    "Hindi",
+  ];
+
   const handleServiceToggle = (serviceId: string) => {
     setSelectedServices((prev) =>
       prev.includes(serviceId)
@@ -192,9 +295,9 @@ export default function FindTutor() {
   };
 
   const priceOptions = [
-    { label: "$20-$30", min: 20, max: 30 },
-    { label: "$30-$40", min: 30, max: 40 },
-    { label: "$40-$50", min: 40, max: 50 },
+    { label: "$20-$30/hr", min: 20, max: 30 },
+    { label: "$30-$40/hr", min: 30, max: 40 },
+    { label: "$40-$50/hr", min: 40, max: 50 },
   ];
 
   const availabilityOptions = ["Full-time", "Part-time"];
@@ -264,6 +367,13 @@ export default function FindTutor() {
         return false;
       }
 
+      // Filter by language (only for language tutors)
+      if (filters.language && tutor.languages) {
+        if (!tutor.languages.includes(filters.language)) {
+          return false;
+        }
+      }
+
       return true;
     });
   }, [selectedServices, filters]);
@@ -274,7 +384,7 @@ export default function FindTutor() {
 
       <main className="flex-grow">
         {/* Service Selection Section */}
-        <section className="py-6 lg:py-8 border-b border-border dark:border-slate-800">
+        <section className="pt-6 pb-2 lg:pt-8 lg:pb-2 border-b border-border dark:border-slate-800">
           <div className="container mx-auto px-4 sm:px-6 lg:px-8">
             <div className="mb-6">
               <h1 className="text-3xl lg:text-4xl font-bold text-foreground mb-2">
@@ -294,13 +404,13 @@ export default function FindTutor() {
                   <button
                     key={service.id}
                     onClick={() => handleServiceToggle(service.id)}
-                    className={`p-6 rounded-xl border-2 transition-all ${
+                    className={`p-4 rounded-xl border-2 transition-all ${
                       isSelected
                         ? "border-primary bg-primary/10 dark:bg-primary/5"
                         : "border-border dark:border-slate-800 bg-background hover:border-primary/50"
                     }`}
                   >
-                    <Icon className={`w-8 h-8 mb-3 ${isSelected ? "text-primary" : "text-muted-foreground"}`} />
+                    <Icon className={`w-6 h-6 mb-2 ${isSelected ? "text-primary" : "text-muted-foreground"}`} />
                     <h3 className="font-semibold text-foreground text-left">
                       {service.name}
                     </h3>
@@ -312,7 +422,7 @@ export default function FindTutor() {
         </section>
 
         {/* Filters Section */}
-        <section className="py-4 lg:py-6 border-b border-border dark:border-slate-800">
+        <section className="pt-4 pb-2 lg:pt-4 lg:pb-2 border-b border-border dark:border-slate-800">
           <div className="container mx-auto px-4 sm:px-6 lg:px-8">
             {/* Full-width Search Box */}
             <div className="mb-4">
@@ -336,200 +446,236 @@ export default function FindTutor() {
             {/* Filter Categories in Single Line */}
             <div className="flex flex-wrap gap-2 mb-4">
               {/* Price Range Category */}
-              <div className="relative">
-                <button
-                  onClick={() =>
-                    setExpandedFilter(
-                      expandedFilter === "price" ? null : "price"
-                    )
-                  }
-                  className={`px-4 py-2 rounded-lg font-medium text-sm transition-all flex items-center gap-2 ${
-                    expandedFilter === "price" || filters.priceRange
-                      ? "bg-primary text-primary-foreground"
-                      : "bg-muted text-foreground hover:bg-primary/20"
+              <button
+                onClick={() =>
+                  setExpandedFilter(
+                    expandedFilter === "price" ? null : "price"
+                  )
+                }
+                className={`px-4 py-2 rounded-lg font-medium text-sm transition-all flex items-center gap-2 ${
+                  expandedFilter === "price" || filters.priceRange
+                    ? "bg-primary text-primary-foreground"
+                    : "bg-muted text-foreground hover:bg-primary/20"
+                }`}
+              >
+                Price Range
+                <ChevronDown
+                  className={`w-4 h-4 transition-transform ${
+                    expandedFilter === "price" ? "rotate-180" : ""
                   }`}
-                >
-                  Price Range
-                  <ChevronDown
-                    className={`w-4 h-4 transition-transform ${
-                      expandedFilter === "price" ? "rotate-180" : ""
-                    }`}
-                  />
-                </button>
-                {expandedFilter === "price" && (
-                  <div className="absolute top-full left-0 mt-2 bg-white dark:bg-slate-900 border border-border dark:border-slate-800 rounded-lg p-3 z-10 whitespace-nowrap shadow-lg">
-                    <div className="flex flex-col gap-2">
-                      {priceOptions.map((option) => (
-                        <button
-                          key={option.label}
-                          onClick={() => {
-                            setFilters((prev) => ({
-                              ...prev,
-                              priceRange:
-                                prev.priceRange === option.label
-                                  ? ""
-                                  : option.label,
-                            }));
-                            setExpandedFilter(null);
-                          }}
-                          className={`px-3 py-1.5 rounded text-xs font-medium transition-all text-left ${
-                            filters.priceRange === option.label
-                              ? "bg-primary text-primary-foreground"
-                              : "bg-muted text-foreground hover:bg-primary/20"
-                          }`}
-                        >
-                          {option.label}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </div>
+                />
+              </button>
 
               {/* Availability Category */}
-              <div className="relative">
-                <button
-                  onClick={() =>
-                    setExpandedFilter(
-                      expandedFilter === "availability" ? null : "availability"
-                    )
-                  }
-                  className={`px-4 py-2 rounded-lg font-medium text-sm transition-all flex items-center gap-2 ${
-                    expandedFilter === "availability" || filters.availability
-                      ? "bg-primary text-primary-foreground"
-                      : "bg-muted text-foreground hover:bg-primary/20"
+              <button
+                onClick={() =>
+                  setExpandedFilter(
+                    expandedFilter === "availability" ? null : "availability"
+                  )
+                }
+                className={`px-4 py-2 rounded-lg font-medium text-sm transition-all flex items-center gap-2 ${
+                  expandedFilter === "availability" || filters.availability
+                    ? "bg-primary text-primary-foreground"
+                    : "bg-muted text-foreground hover:bg-primary/20"
+                }`}
+              >
+                Availability
+                <ChevronDown
+                  className={`w-4 h-4 transition-transform ${
+                    expandedFilter === "availability" ? "rotate-180" : ""
                   }`}
-                >
-                  Availability
-                  <ChevronDown
-                    className={`w-4 h-4 transition-transform ${
-                      expandedFilter === "availability" ? "rotate-180" : ""
-                    }`}
-                  />
-                </button>
-                {expandedFilter === "availability" && (
-                  <div className="absolute top-full left-0 mt-2 bg-white dark:bg-slate-900 border border-border dark:border-slate-800 rounded-lg p-3 z-10 whitespace-nowrap shadow-lg">
-                    <div className="flex flex-col gap-2">
-                      {availabilityOptions.map((option) => (
-                        <button
-                          key={option}
-                          onClick={() => {
-                            setFilters((prev) => ({
-                              ...prev,
-                              availability:
-                                prev.availability === option ? "" : option,
-                            }));
-                            setExpandedFilter(null);
-                          }}
-                          className={`px-3 py-1.5 rounded text-xs font-medium transition-all text-left ${
-                            filters.availability === option
-                              ? "bg-primary text-primary-foreground"
-                              : "bg-muted text-foreground hover:bg-primary/20"
-                          }`}
-                        >
-                          {option}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </div>
+                />
+              </button>
 
               {/* Rating Category */}
-              <div className="relative">
-                <button
-                  onClick={() =>
-                    setExpandedFilter(expandedFilter === "rating" ? null : "rating")
-                  }
-                  className={`px-4 py-2 rounded-lg font-medium text-sm transition-all flex items-center gap-2 ${
-                    expandedFilter === "rating" || filters.minRating
-                      ? "bg-primary text-primary-foreground"
-                      : "bg-muted text-foreground hover:bg-primary/20"
+              <button
+                onClick={() =>
+                  setExpandedFilter(expandedFilter === "rating" ? null : "rating")
+                }
+                className={`px-4 py-2 rounded-lg font-medium text-sm transition-all flex items-center gap-2 ${
+                  expandedFilter === "rating" || filters.minRating
+                    ? "bg-primary text-primary-foreground"
+                    : "bg-muted text-foreground hover:bg-primary/20"
+                }`}
+              >
+                Rating
+                <ChevronDown
+                  className={`w-4 h-4 transition-transform ${
+                    expandedFilter === "rating" ? "rotate-180" : ""
                   }`}
-                >
-                  Rating
-                  <ChevronDown
-                    className={`w-4 h-4 transition-transform ${
-                      expandedFilter === "rating" ? "rotate-180" : ""
-                    }`}
-                  />
-                </button>
-                {expandedFilter === "rating" && (
-                  <div className="absolute top-full left-0 mt-2 bg-white dark:bg-slate-900 border border-border dark:border-slate-800 rounded-lg p-3 z-10 whitespace-nowrap shadow-lg">
-                    <div className="flex flex-col gap-2">
-                      {ratingOptions.map((option) => (
-                        <button
-                          key={option}
-                          onClick={() => {
-                            setFilters((prev) => ({
-                              ...prev,
-                              minRating: prev.minRating === option ? "" : option,
-                            }));
-                            setExpandedFilter(null);
-                          }}
-                          className={`px-3 py-1.5 rounded text-xs font-medium transition-all text-left ${
-                            filters.minRating === option
-                              ? "bg-primary text-primary-foreground"
-                              : "bg-muted text-foreground hover:bg-primary/20"
-                          }`}
-                        >
-                          {option} Stars
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </div>
+                />
+              </button>
 
               {/* Qualification Category */}
-              <div className="relative">
+              <button
+                onClick={() =>
+                  setExpandedFilter(
+                    expandedFilter === "qualification" ? null : "qualification"
+                  )
+                }
+                className={`px-4 py-2 rounded-lg font-medium text-sm transition-all flex items-center gap-2 ${
+                  expandedFilter === "qualification" || filters.qualification
+                    ? "bg-primary text-primary-foreground"
+                    : "bg-muted text-foreground hover:bg-primary/20"
+                }`}
+              >
+                Qualification
+                <ChevronDown
+                  className={`w-4 h-4 transition-transform ${
+                    expandedFilter === "qualification" ? "rotate-180" : ""
+                  }`}
+                />
+              </button>
+
+              {/* Language Category - Only show when Language Tuition is selected */}
+              {selectedServices.includes("language") && (
                 <button
                   onClick={() =>
                     setExpandedFilter(
-                      expandedFilter === "qualification" ? null : "qualification"
+                      expandedFilter === "language" ? null : "language"
                     )
                   }
                   className={`px-4 py-2 rounded-lg font-medium text-sm transition-all flex items-center gap-2 ${
-                    expandedFilter === "qualification" || filters.qualification
+                    expandedFilter === "language" || filters.language
                       ? "bg-primary text-primary-foreground"
                       : "bg-muted text-foreground hover:bg-primary/20"
                   }`}
                 >
-                  Qualification
+                  Language
                   <ChevronDown
                     className={`w-4 h-4 transition-transform ${
-                      expandedFilter === "qualification" ? "rotate-180" : ""
+                      expandedFilter === "language" ? "rotate-180" : ""
                     }`}
                   />
                 </button>
-                {expandedFilter === "qualification" && (
-                  <div className="absolute top-full left-0 mt-2 bg-white dark:bg-slate-900 border border-border dark:border-slate-800 rounded-lg p-3 z-10 whitespace-nowrap shadow-lg max-h-48 overflow-y-auto">
-                    <div className="flex flex-col gap-2">
-                      {qualificationOptions.map((option) => (
-                        <button
-                          key={option}
-                          onClick={() => {
-                            setFilters((prev) => ({
-                              ...prev,
-                              qualification:
-                                prev.qualification === option ? "" : option,
-                            }));
-                            setExpandedFilter(null);
-                          }}
-                          className={`px-3 py-1.5 rounded text-xs font-medium transition-all text-left ${
-                            filters.qualification === option
-                              ? "bg-primary text-primary-foreground"
-                              : "bg-muted text-foreground hover:bg-primary/20"
-                          }`}
-                        >
-                          {option}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </div>
+              )}
             </div>
+
+            {/* Expanded Options - Display in next line */}
+            {expandedFilter === "price" && (
+              <div className="flex flex-wrap gap-2 mb-4 ml-2">
+                {priceOptions.map((option) => (
+                  <button
+                    key={option.label}
+                    onClick={() => {
+                      setFilters((prev) => ({
+                        ...prev,
+                        priceRange:
+                          prev.priceRange === option.label
+                            ? ""
+                            : option.label,
+                      }));
+                      setExpandedFilter(null);
+                    }}
+                    className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                      filters.priceRange === option.label
+                        ? "bg-primary text-primary-foreground"
+                        : "bg-muted text-foreground hover:bg-primary/20"
+                    }`}
+                  >
+                    {option.label}
+                  </button>
+                ))}
+              </div>
+            )}
+
+            {expandedFilter === "availability" && (
+              <div className="flex flex-wrap gap-2 mb-4 ml-2">
+                {availabilityOptions.map((option) => (
+                  <button
+                    key={option}
+                    onClick={() => {
+                      setFilters((prev) => ({
+                        ...prev,
+                        availability:
+                          prev.availability === option ? "" : option,
+                      }));
+                      setExpandedFilter(null);
+                    }}
+                    className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                      filters.availability === option
+                        ? "bg-primary text-primary-foreground"
+                        : "bg-muted text-foreground hover:bg-primary/20"
+                    }`}
+                  >
+                    {option}
+                  </button>
+                ))}
+              </div>
+            )}
+
+            {expandedFilter === "rating" && (
+              <div className="flex flex-wrap gap-2 mb-4 ml-2">
+                {ratingOptions.map((option) => (
+                  <button
+                    key={option}
+                    onClick={() => {
+                      setFilters((prev) => ({
+                        ...prev,
+                        minRating: prev.minRating === option ? "" : option,
+                      }));
+                      setExpandedFilter(null);
+                    }}
+                    className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                      filters.minRating === option
+                        ? "bg-primary text-primary-foreground"
+                        : "bg-muted text-foreground hover:bg-primary/20"
+                    }`}
+                  >
+                    {option} Stars
+                  </button>
+                ))}
+              </div>
+            )}
+
+            {expandedFilter === "qualification" && (
+              <div className="flex flex-wrap gap-2 mb-4 ml-2">
+                {qualificationOptions.map((option) => (
+                  <button
+                    key={option}
+                    onClick={() => {
+                      setFilters((prev) => ({
+                        ...prev,
+                        qualification:
+                          prev.qualification === option ? "" : option,
+                      }));
+                      setExpandedFilter(null);
+                    }}
+                    className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                      filters.qualification === option
+                        ? "bg-primary text-primary-foreground"
+                        : "bg-muted text-foreground hover:bg-primary/20"
+                    }`}
+                  >
+                    {option}
+                  </button>
+                ))}
+              </div>
+            )}
+
+            {expandedFilter === "language" && selectedServices.includes("language") && (
+              <div className="flex flex-wrap gap-2 mb-4 ml-2">
+                {availableLanguages.map((language) => (
+                  <button
+                    key={language}
+                    onClick={() => {
+                      setFilters((prev) => ({
+                        ...prev,
+                        language: prev.language === language ? "" : language,
+                      }));
+                      setExpandedFilter(null);
+                    }}
+                    className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                      filters.language === language
+                        ? "bg-primary text-primary-foreground"
+                        : "bg-muted text-foreground hover:bg-primary/20"
+                    }`}
+                  >
+                    {language}
+                  </button>
+                ))}
+              </div>
+            )}
 
             {/* Clear Filters Button */}
             {(filters.searchQuery ||
@@ -537,6 +683,7 @@ export default function FindTutor() {
               filters.availability ||
               filters.minRating ||
               filters.qualification ||
+              filters.language ||
               selectedServices.length > 0) && (
               <button
                 onClick={() => {
@@ -546,11 +693,12 @@ export default function FindTutor() {
                     availability: "",
                     minRating: "",
                     qualification: "",
+                    language: "",
                   });
                   setSelectedServices([]);
                   setExpandedFilter(null);
                 }}
-                className="px-4 py-2 rounded-lg border border-border dark:border-slate-800 text-sm font-medium text-foreground hover:bg-muted dark:hover:bg-slate-800 transition-colors"
+                className="mt-4 px-4 py-2 rounded-lg border border-border dark:border-slate-800 text-sm font-medium text-foreground hover:bg-muted dark:hover:bg-slate-800 transition-colors"
               >
                 Clear All Filters
               </button>
@@ -584,11 +732,12 @@ export default function FindTutor() {
                 <button
                   onClick={() => {
                     setFilters({
-                      name: "",
-                      priceRange: [20, 50],
-                      minRating: 0,
+                      searchQuery: "",
+                      priceRange: "",
+                      availability: "",
+                      minRating: "",
                       qualification: "",
-                      location: "",
+                      language: "",
                     });
                     setSelectedServices([]);
                   }}
@@ -653,7 +802,10 @@ export default function FindTutor() {
                               </div>
                             </div>
 
-                            <button className="px-4 py-2 rounded-lg border-2 border-primary text-primary font-medium text-sm hover:bg-primary-50 dark:hover:bg-slate-800 transition-colors">
+                            <button 
+                              onClick={() => navigate(`/tutor/${tutor.id}`)}
+                              className="px-4 py-2 rounded-lg border-2 border-primary text-primary font-medium text-sm hover:bg-primary-50 dark:hover:bg-slate-800 transition-colors"
+                            >
                               View Profile
                             </button>
                           </div>
@@ -680,8 +832,11 @@ export default function FindTutor() {
                             <span className="text-muted-foreground">/hour</span>
                           </div>
 
-                          <button className="w-full px-6 py-2 rounded-lg bg-primary text-primary-foreground font-semibold hover:bg-primary-600 transition-colors">
-                            Book Now
+                          <button 
+                            onClick={() => handleBookLesson(tutor)}
+                            className="w-full px-6 py-2 rounded-lg bg-primary text-primary-foreground font-semibold hover:bg-primary-600 transition-colors"
+                          >
+                            Book trial lesson
                           </button>
                         </div>
 
@@ -694,11 +849,17 @@ export default function FindTutor() {
 
                     {/* Mobile CTA */}
                     <div className="md:hidden mt-4 flex gap-3">
-                      <button className="flex-1 px-4 py-2 rounded-lg border-2 border-primary text-primary font-medium text-sm hover:bg-primary-50 dark:hover:bg-slate-800 transition-colors">
+                      <button 
+                        onClick={() => navigate(`/tutor/${tutor.id}`)}
+                        className="flex-1 px-4 py-2 rounded-lg border-2 border-primary text-primary font-medium text-sm hover:bg-primary-50 dark:hover:bg-slate-800 transition-colors"
+                      >
                         View Profile
                       </button>
-                      <button className="flex-1 px-4 py-2 rounded-lg bg-primary text-primary-foreground font-medium text-sm hover:bg-primary-600 transition-colors">
-                        Book Now
+                      <button 
+                        onClick={() => handleBookLesson(tutor)}
+                        className="flex-1 px-4 py-2 rounded-lg bg-primary text-primary-foreground font-medium text-sm hover:bg-primary-600 transition-colors"
+                      >
+                        Book trial lesson
                       </button>
                     </div>
                   </div>
@@ -708,6 +869,151 @@ export default function FindTutor() {
           </div>
         </section>
       </main>
+
+      {/* Booking Modal */}
+      {isBookingModalOpen && selectedTutor && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white dark:bg-slate-900 rounded-2xl max-w-lg w-full max-h-[90vh] overflow-y-auto">
+            {/* Modal Header */}
+            <div className="sticky top-0 bg-white dark:bg-slate-900 border-b border-border dark:border-slate-800 p-6 flex items-start justify-between">
+              <div className="flex items-start gap-3">
+                <img
+                  src={selectedTutor.photo}
+                  alt={selectedTutor.name}
+                  className="w-12 h-12 rounded-full object-cover"
+                />
+                <div>
+                  <h2 className="text-xl font-bold text-foreground">Book a trial lesson</h2>
+                  <p className="text-sm text-muted-foreground">to discuss your level and learning plan</p>
+                </div>
+              </div>
+              <button
+                onClick={() => setIsBookingModalOpen(false)}
+                className="text-muted-foreground hover:text-foreground transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Modal Content */}
+            <div className="p-6 space-y-6">
+              {/* Duration Selection */}
+              <div>
+                <div className="flex gap-3">
+                  <button
+                    onClick={() => setSelectedDuration("25")}
+                    className={`flex-1 py-3 px-4 rounded-lg border-2 font-medium transition-colors ${
+                      selectedDuration === "25"
+                        ? "border-primary bg-primary/5 text-primary"
+                        : "border-border dark:border-slate-700 text-foreground hover:border-primary/50"
+                    }`}
+                  >
+                    25 mins
+                  </button>
+                  <button
+                    onClick={() => setSelectedDuration("50")}
+                    className={`flex-1 py-3 px-4 rounded-lg border-2 font-medium transition-colors ${
+                      selectedDuration === "50"
+                        ? "border-primary bg-primary/5 text-primary"
+                        : "border-border dark:border-slate-700 text-foreground hover:border-primary/50"
+                    }`}
+                  >
+                    50 mins
+                  </button>
+                </div>
+              </div>
+
+              {/* Date Selection */}
+              <div>
+                <div className="flex items-center justify-between mb-4">
+                  <button
+                    onClick={() => setCurrentWeekStart(Math.max(0, currentWeekStart - 7))}
+                    disabled={currentWeekStart === 0}
+                    className="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    <ChevronLeft className="w-5 h-5" />
+                  </button>
+                  <span className="text-sm font-medium text-foreground">
+                    {formatDateRange(dates[currentWeekStart])}
+                  </span>
+                  <button
+                    onClick={() => setCurrentWeekStart(currentWeekStart + 7)}
+                    className="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800"
+                  >
+                    <ChevronRight className="w-5 h-5" />
+                  </button>
+                </div>
+
+                <div className="grid grid-cols-7 gap-2 mb-4">
+                  {dates.slice(currentWeekStart, currentWeekStart + 7).map((date, index) => {
+                    const formatted = formatDate(date);
+                    const isSelected = selectedDate?.toDateString() === date.toDateString();
+                    const isToday = date.toDateString() === new Date().toDateString();
+                    
+                    return (
+                      <button
+                        key={index}
+                        onClick={() => setSelectedDate(date)}
+                        className={`flex flex-col items-center py-3 px-2 rounded-lg border-2 transition-colors ${
+                          isSelected
+                            ? "border-primary bg-primary text-primary-foreground"
+                            : isToday
+                            ? "border-primary/50 bg-primary/5 text-primary"
+                            : "border-border dark:border-slate-700 text-foreground hover:border-primary/50"
+                        }`}
+                      >
+                        <span className="text-xs font-medium mb-1">{formatted.day}</span>
+                        <span className="text-lg font-bold">{formatted.date}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Time Zone Info */}
+              <div className="bg-slate-50 dark:bg-slate-800/50 rounded-lg p-3">
+                <p className="text-sm text-muted-foreground">
+                  <Clock className="w-4 h-4 inline mr-1" />
+                  In your time zone, Asia/Kolkata (GMT +5:30)
+                </p>
+              </div>
+
+              {/* Time Slots */}
+              {selectedDate && (
+                <div>
+                  <h3 className="font-semibold text-foreground mb-3 flex items-center gap-2">
+                    <Clock className="w-4 h-4" />
+                    Evening
+                  </h3>
+                  <div className="grid grid-cols-3 gap-2">
+                    {timeSlots.map((time) => (
+                      <button
+                        key={time}
+                        onClick={() => setSelectedTime(time)}
+                        className={`py-2 px-3 rounded-lg border-2 text-sm font-medium transition-colors ${
+                          selectedTime === time
+                            ? "border-primary bg-primary/5 text-primary"
+                            : "border-border dark:border-slate-700 text-foreground hover:border-primary/50"
+                        }`}
+                      >
+                        {time}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Continue Button */}
+              <button
+                disabled={!selectedDate || !selectedTime}
+                className="w-full py-3 px-6 rounded-lg bg-primary text-primary-foreground font-semibold hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Continue
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       <Footer />
     </div>
